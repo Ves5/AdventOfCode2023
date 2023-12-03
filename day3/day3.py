@@ -21,6 +21,9 @@ class Symbol:
         self.x = x
         self.y = y
         
+    def getSymbol(self) -> str:
+        return self.symbol
+    
     def __str__(self) -> str:
         return f'{self.symbol} at ({self.x}, {self.y})'
 
@@ -48,12 +51,11 @@ def check_adjecency(symbol, number):
                 return True
     return False
 
-def find_all_gear_candidates(grid) -> list[Symbol]:
+def find_all_gear_candidates(symbols) -> list[Symbol]:
     candidates = []
-    for i in range(len(grid)):
-        for j in range(len(grid[i])):
-            if grid[i][j] == '*':
-                candidates.append(Symbol(grid[i][j], j, i))
+    for symbol in symbols:
+        if symbol.getSymbol() == '*':
+            candidates.append(symbol)
     return candidates
 
 with open('day3/input.txt') as f:
@@ -80,7 +82,7 @@ with open('day3/input.txt') as f:
     gear_sum = 0
     
     # find all coordinates of gear candidates
-    candidates = find_all_gear_candidates(grid)
+    candidates = find_all_gear_candidates(symbols)
     
     # find all gears
     # gears are gear candidates that have exactly 2 number parts adjacent

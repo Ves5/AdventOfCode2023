@@ -1,8 +1,16 @@
 class MapRange:
+    start = 0
+    stop = 0
+    offset = 0
+    
     def __init__(self, source, destination, length):
         self.source = source
         self.destination = destination
         self.length = length
+        self.start = source
+        self.stop = source + length - 1
+        self.offset = self.destination - self.source
+        
     
     # check if a number belongs to this map range
     def check_belonging(self, number):
@@ -13,6 +21,22 @@ class MapRange:
         if self.check_belonging(number):
             return self.destination + (number - self.source)
         
+    def start_stop_tuple(self):
+        return (self.source, self.source + self.length - 1)
+    
+class NumberRange:
+    start = 0
+    stop = 0
+    phase = 0
+    
+    def __init__(self, start, stop, phase):
+        self.start = start
+        self.stop = stop
+        self.phase = phase
+        
+    def min(self):
+        return self.start
+    
 class Mapper:
     map_phases = []
     
@@ -29,16 +53,25 @@ class Mapper:
                     break
         return tmp
     
-    def convert_number_range(self, number, length):
-        converted = []
-        for i in range(number, number + length):
-            tmp = i
-            for phase in self.map_phases:
-                for map_range in phase:
-                    if map_range.check_belonging(tmp):
-                        tmp = map_range.convert(tmp)
-                        break
-        return min(converted)
+    def convert_number_ranges(self, ranges):
+        tmp = ranges
+        for i in range(len(self.map_phases)):
+            for map_range in self.map_phases[i]:
+                for j in range(len(tmp)):
+                    if tmp[j].phase > i:
+                        continue
+                    if map_range.start > tmp[j].stop or map_range.stop < tmp[j].start:
+                        continue
+                    else:
+                        if tmp[j].start < map_range.start <= tmp[j].stop:
+                            tmp.append(NumberRange(tmp[j].start, map_range.start - 1, i))
+                            tmp[j] = NumberRange(map_range.start, tmp[j].stop, i)
+                        if tmp[j].start <= map_range.stop < tmp[j].stop:
+                            tmp.append(NumberRange(map_range.stop + 1, tmp[j].stop, i))
+                            tmp[j] = NumberRange(tmp[j].start, map_range.stop, i)
+                        if tmp[j].start >= map_range.start and tmp[j].stop <= map_range.stop:
+                            tmp[j] = NumberRange(map_range.offset + tmp[j].start, map_range.offset + tmp[j].stop, i+1)
+        return tmp 
     
     # load a mapping phase from text
     def load_map_phase(self, maps):
@@ -101,5 +134,11 @@ with open("day5/input.txt") as f:
     ## PART 2.5 ##
     ## THE LESS SCUFFED WAY? ##
     
-    ## Ideas:
-    # 1. consolidating the map phases into one map phase
+    # turn seeds into number ranges of (start, stop)
+    seed_ranges = []
+    for i in range(0, len(seeds), 2):
+        seed_ranges.append(NumberRange(seeds[i], seeds[i] + seeds[i+1] - 1, 0))
+        
+    loc_ranges = mapper.convert_number_ranges(seed_ranges)
+    
+    print("Part 2: " + str(min([x.min() for x in loc_ranges])))
